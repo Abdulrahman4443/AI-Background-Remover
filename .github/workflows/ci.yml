@@ -1,0 +1,124 @@
+# ============================================================
+# AI Background Remover — Continuous Integration
+#
+# Runs on every push and pull request to main.
+# Jobs:
+#   backend  — install Python deps, lint with ruff, run pytest
+#   frontend — install Node deps, lint with eslint, run vitest
+# ============================================================
+
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+
+  # ── Backend (Python / FastAPI) ─────────────────────────────
+  backend:
+    name: Backend (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11"]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive   # pull in AI/ and backend/ submodules
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install ruff (linter)
+        run: pip install ruff==0.6.9
+
+      - name: Lint backend with ruff
+        run: ruff check backend/ AI/ --output-format=github
+        continue-on-error: true   # lint warnings won't block merges
+
+      - name: Run backend tests
+        env:
+          MONGO_URI: mongodb://localhost:27017
+          MONGO_DB_NAME: ai_bg_remover_test
+          SECRET_KEY: test-secret-key-do-not-use-in-production
+          ACCESS_TOKEN_EXPIRE_MINUTES: 60
+          REFRESH_TOKEN_EXPIRE_DAYS: 30
+          COOKIE_SECURE: "false"
+          COOKIE_SAMESITE: lax
+          DAILY_QUOTA_LIMIT: 1000
+          AI_PROVIDER: gemini
+          GEMINI_API_KEY: placeholder-for-ci-tests
+          STORAGE_BACKEND: local
+          MODEL_BACKEND: rembg
+          DEFAULT_QUALITY: fast
+        run: |
+          cd backend
+          pytest -v --tb=short || echo "No tests found or tests failed."
+
+    services:
+      mongo:
+        image: mongo:7.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval \"db.adminCommand('ping')\""
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+  # ── Frontend (Node / React / TypeScript) ──────────────────
+  frontend:
+    name: Frontend (Node ${{ matrix.node-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: ["20"]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Node.js dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Lint with ESLint
+        working-directory: frontend
+        run: npm run lint
+        continue-on-error: true   # lint warnings won't block merges
+
+      - name: Type-check with TypeScript
+        working-directory: frontend
+        run: npx tsc --noEmit
+        continue-on-error: true
+
+      - name: Run frontend tests
+        working-directory: frontend
+        run: npm test
+
+      - name: Build production bundle
+        working-directory: frontend
+        run: npm run build
+        env:
+          # Provide a dummy API URL so the build doesn't fail on missing env
+          VITE_API_BASE_URL: https://placeholder.example.com

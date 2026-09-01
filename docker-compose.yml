@@ -1,0 +1,87 @@
+# ============================================================
+# AI Background Remover — Full-stack Docker Compose
+#
+# Starts:
+#   backend   — FastAPI + AI pipeline (port 8000)
+#   mongo     — MongoDB 7 (port 27017)
+#   frontend  — Vite dev server (port 5173)
+#
+# Usage:
+#   docker compose up              # start all services
+#   docker compose up backend      # start only backend + mongo
+#   docker compose down -v         # stop and remove volumes
+# ============================================================
+
+services:
+
+  # ── MongoDB ──────────────────────────────────────────────
+  mongo:
+    image: mongo:7.0
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── FastAPI Backend + AI Pipeline ────────────────────────
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        USE_GPU: "false"   # set to "true" for GPU builds
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - backend/.env       # copy backend/.env.example → backend/.env and fill in values
+    environment:
+      MONGO_URI: mongodb://mongo:27017
+      MONGO_DB_NAME: ai_bg_remover
+      ALLOWED_ORIGINS: "http://localhost:5173"
+      COOKIE_SECURE: "false"
+      COOKIE_SAMESITE: "lax"
+    volumes:
+      # Persist processed images between container restarts
+      - output_data:/app/backend/output
+      - upload_data:/app/backend/uploads
+      # Persist downloaded rembg model weights
+      - model_cache:/root/.u2net
+    depends_on:
+      mongo:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/')"]
+      interval: 30s
+      timeout: 10s
+      start_period: 90s   # allow time for model warm-up
+      retries: 3
+
+  # ── React Frontend (development) ─────────────────────────
+  frontend:
+    image: node:20-alpine
+    working_dir: /app
+    command: sh -c "npm ci && npm run dev -- --host 0.0.0.0"
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules         # keep node_modules inside the container
+    environment:
+      # Vite proxy forwards /api → backend:8000, so no VITE_API_BASE_URL needed here
+      NODE_ENV: development
+    depends_on:
+      - backend
+
+# ── Named volumes ─────────────────────────────────────────
+volumes:
+  mongo_data:
+  output_data:
+  upload_data:
+  model_cache:    # caches rembg model downloads (~500 MB) across rebuilds
