@@ -1,46 +1,74 @@
 # AI Background Remover
 
-> **Commander:** QuantumLogics Labs  
-> **Organization:** [github.com/QuantumLogicsLabs](https://github.com/QuantumLogicsLabs)  
-> **Status:** Active development — Commander is building solo until teams are filled.
+> **Organization:** [QuantumLogics Labs](https://github.com/QuantumLogicsLabs)
+> **Status:** Active development — v2 in production
 
 ---
 
 ## What This Project Is
 
-A full-stack AI web application that removes image backgrounds automatically.  
-A user uploads a photo, the AI isolates the subject, and the app returns a transparent PNG — no manual masking needed.
+A full-stack AI web application that removes image backgrounds automatically and provides a complete suite of AI-powered image editing tools. A user uploads a photo, the AI isolates the subject, and the app returns a transparent PNG — no manual masking needed.
 
 **Who it is for:** photographers, designers, e-commerce sellers, content creators.
 
 ---
 
+## Feature Set (v2)
+
+| Feature | Status |
+|---|---|
+| AI background removal (3 quality tiers) | ✅ Done |
+| JWT authentication + refresh tokens | ✅ Done |
+| User registration & login | ✅ Done |
+| Image enhancement (brightness, contrast, saturation, etc.) | ✅ Done |
+| Background replacement (solid, gradient, image, library) | ✅ Done |
+| Smart crop (AI-guided aspect ratio crop) | ✅ Done |
+| Recolor & eraser tools | ✅ Done |
+| Batch processing (multi-file, quota-aware) | ✅ Done |
+| Shadow studio | ✅ Done |
+| Inpainting | ✅ Done |
+| Vectorize (PNG → SVG) | ✅ Done |
+| History gallery (filter, sort, search, bulk export) | ✅ Done |
+| AI chatbot (Gemini / Groq, vision-aware) | ✅ Done |
+| AI image analysis (quality scores, palette, recommendations) | ✅ Done |
+| Per-user daily quota system | ✅ Done |
+| Action history & undo tracking | ✅ Done |
+| Analytics & usage tracking | ✅ Done |
+| Collaboration routes | ✅ Done |
+| S3-compatible cloud storage | ✅ Done |
+| Dark / light mode | ✅ Done |
+| PWA support | ✅ Done |
+| Keyboard shortcuts | ✅ Done |
+| Docker + docker-compose | ✅ Done |
+| Video background removal | 🔜 Planned |
+| Mobile app | 🔜 Planned |
+
+---
+
 ## Repository Structure
 
-This is the **parent repository**. It does not contain application code itself — it ties together three independent submodule repositories and holds shared configuration.
+This is the **parent repository**. It ties together three independent submodule repositories and holds shared configuration.
 
 ```
 AI-Background-Remover/          ← you are here (parent repo)
 │
 ├── frontend/                   ← submodule → AI-Background-Remover-frontend
-│   React + TypeScript + Tailwind + Vite
+│   React 18 + TypeScript + Tailwind CSS + Vite 5
 │   Owned by: Web Team (UI)
 │
 ├── backend/                    ← submodule → AI-Background-Remover-backend
-│   Python + FastAPI + MongoDB
+│   Python 3.11 + FastAPI + MongoDB (Motor) + JWT auth
 │   Owned by: Web Team (API)
 │
-├── AI-Background-Remover-AI/   ← submodule → AI-Background-Remover-AI
-│   PyTorch + ONNX + OpenCV + rembg
+├── AI/                         ← submodule → AI-Background-Remover-AI
+│   rembg / ONNX / PyTorch inference pipeline
 │   Owned by: AI Team + ML Team
 │
-├── .gitmodules                 ← submodule URL declarations
-├── .gitattributes              ← line-ending rules (LF everywhere)
-├── requirements.txt            ← Python deps for backend + AI combined
+├── docker-compose.yml          ← one-command full-stack local setup
 ├── Dockerfile                  ← containerises backend + AI together
+├── requirements.txt            ← Python deps for backend + AI combined
 ├── .env.example                ← all environment variables documented
-├── CONTRIBUTING.md             ← git workflow, branch rules, PR process
-└── TEAM_WORKLOAD.md            ← who owns what, current build status
+└── CHANGELOG.md                ← version history
 ```
 
 ---
@@ -48,67 +76,33 @@ AI-Background-Remover/          ← you are here (parent repo)
 ## Three Teams, One Product
 
 | Team | Repo | What They Build |
-|------|------|-----------------|
-| **Web Team** | `frontend` | React UI — upload, preview, compare, download, history |
-| **Web Team** | `backend` | FastAPI — REST endpoints, file storage, MongoDB integration |
-| **AI Team** | `AI-Background-Remover-AI` | Inference pipeline — preprocessing, model run, postprocessing |
-| **ML Team** | `AI-Background-Remover-AI` | Model research — evaluate U²-Net, BiRefNet, RMBG-2.0, train/export |
-
-> **AI Team vs ML Team distinction:**  
-> - AI Team wires models into the pipeline (code, integration, optimization).  
-> - ML Team researches, trains, evaluates, and exports the actual model weights.  
-> Both work inside the same `AI-Background-Remover-AI` submodule but in separate folders — `pipeline/` vs `research/`.
-
----
-
-## How Submodules Work
-
-Each submodule is a fully independent Git repository with its own history, branches, and pull requests. The parent repo just records *which commit* of each submodule to point to.
-
-**Cloning the full project (all submodules):**
-```bash
-git clone --recurse-submodules https://github.com/QuantumLogicsLabs/AI-Background-Remover.git
-```
-
-**If you already cloned without submodules:**
-```bash
-git submodule update --init --recursive
-```
-
-**After a teammate pushes to a submodule and you want the parent to track the new commit:**
-```bash
-# Inside the submodule folder
-git pull origin main
-
-# Back in the parent repo
-cd ..
-git add frontend          # or backend / AI-Background-Remover-AI
-git commit -m "chore: update frontend submodule pointer"
-git push
-```
-
-> Team members work directly inside the submodule repos. They never touch the parent repo unless they are updating a submodule pointer.
+|---|---|---|
+| **Web Team (UI)** | `frontend` | React UI — upload, preview, compare, download, history, settings |
+| **Web Team (API)** | `backend` | FastAPI — 20+ REST endpoints, MongoDB, JWT auth, quotas, storage |
+| **AI Team** | `AI` | Inference pipeline — preprocessing, model execution, postprocessing |
+| **ML Team** | `AI` | Model research — evaluate U²-Net, BiRefNet, train/export weights |
 
 ---
 
 ## Full Tech Stack
 
 | Layer | Technology |
-|-------|-----------|
-| UI Framework | React 18 + TypeScript |
+|---|---|
+| UI Framework | React 18 + TypeScript 5 |
 | Styling | Tailwind CSS 3 + CSS custom properties |
 | Build Tool | Vite 5 |
-| HTTP Client | Axios |
+| HTTP Client | Axios (with 401 interceptor + token refresh) |
 | File Upload | react-dropzone |
 | Routing | react-router-dom v6 |
 | API Framework | FastAPI 0.115 |
 | ASGI Server | Uvicorn |
-| Database | MongoDB (async via Motor) |
-| AI Runtime | PyTorch + ONNX Runtime |
-| Image Processing | OpenCV + Pillow + NumPy |
-| Segmentation Models | U²-Net / BiRefNet / RMBG-2.0 |
-| Quick Prototype | rembg (U²-Net wrapper) |
-| Deployment | Vercel (frontend) + Docker (backend+AI) |
+| Database | MongoDB 7 (async via Motor) |
+| Auth | JWT (python-jose) + bcrypt (passlib) + httpOnly refresh cookies |
+| AI Inference | rembg (ISNet / U²-Net / BiRefNet) + ONNX Runtime + PyTorch 2.3 |
+| Image Processing | OpenCV-contrib + Pillow + NumPy + scikit-image + pymatting |
+| AI Chat / Analysis | Google Gemini 2.0 (default) or Groq (llama-3.3-70b) |
+| Cloud Storage | Local disk (default) or S3-compatible (AWS / Cloudflare R2 / MinIO) |
+| Deployment | Vercel (frontend) + Docker (backend + AI) |
 
 ---
 
@@ -117,138 +111,204 @@ git push
 ### Prerequisites
 - Python 3.11+
 - Node.js 20+
-- MongoDB running locally on port 27017
+- MongoDB running locally on port 27017 **or** use Docker Compose (see below)
 
-### Step 1 — Clone with submodules
+### Option A — Docker Compose (recommended, zero config)
+
+```bash
+git clone --recurse-submodules https://github.com/QuantumLogicsLabs/AI-Background-Remover.git
+cd AI-Background-Remover
+
+# Copy backend env and fill in your API keys
+cp backend/.env.example backend/.env
+# Edit backend/.env — set GEMINI_API_KEY (or GROQ_API_KEY) and SECRET_KEY
+
+docker compose up
+```
+
+- Frontend: http://localhost:5173
+- Backend API: http://localhost:8000
+- Swagger docs: http://localhost:8000/docs
+
+> First run downloads rembg model weights (~500 MB). Subsequent runs use the cache.
+
+---
+
+### Option B — Manual
+
+#### Step 1 — Clone with submodules
 ```bash
 git clone --recurse-submodules https://github.com/QuantumLogicsLabs/AI-Background-Remover.git
 cd AI-Background-Remover
 ```
 
-### Step 2 — Backend + AI environment
+If you already cloned without `--recurse-submodules`:
 ```bash
-# Create and activate a virtual environment
+git submodule update --init --recursive
+```
+
+#### Step 2 — Python environment
+```bash
 python -m venv .venv
 .venv\Scripts\activate          # Windows
 # source .venv/bin/activate     # Mac/Linux
 
 pip install -r requirements.txt
-
-# Copy environment files for each submodule
-cp backend/.env.example backend/.env
-cp AI-Background-Remover-AI/.env.example AI-Background-Remover-AI/.env
-
-# backend/.env  → set MONGO_URI if MongoDB is not on localhost
-# AI/.env       → MODEL_BACKEND=rembg is the default (no model file needed)
 ```
 
-### Step 3 — Run the backend
+#### Step 3 — Environment files
+```bash
+cp backend/.env.example backend/.env
+cp AI/.env.example AI/.env
+```
+
+Edit `backend/.env`:
+- Set `SECRET_KEY` to a random 32-byte hex string: `python -c "import secrets; print(secrets.token_hex(32))"`
+- Set `GEMINI_API_KEY` (get one free at https://aistudio.google.com/app/apikey)
+- Set `MONGO_URI` if MongoDB is not on localhost
+
+#### Step 4 — Run the backend
 ```bash
 cd backend
 uvicorn app:app --reload --port 8000
 ```
 
-API docs available at: `http://localhost:8000/docs`
+Swagger UI: http://localhost:8000/docs
 
-### Step 4 — Frontend
+#### Step 5 — Run the frontend
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-App available at: `http://localhost:5173`
+App: http://localhost:5173
 
 ---
 
 ## API Endpoints (Summary)
 
 | Method | Endpoint | Description |
-|--------|----------|-------------|
+|---|---|---|
+| `POST` | `/api/auth/register` | Register a new user |
+| `POST` | `/api/auth/login` | Login, receive JWT + refresh cookie |
+| `POST` | `/api/auth/logout` | Logout, clear refresh cookie |
+| `POST` | `/api/auth/refresh` | Refresh access token via httpOnly cookie |
 | `POST` | `/api/remove-background` | Upload image, get transparent PNG |
+| `POST` | `/api/enhance` | Enhance image (brightness, contrast, etc.) |
+| `POST` | `/api/replace-bg` | Replace background with colour / image |
+| `POST` | `/api/smart-crop` | AI-guided smart crop |
+| `POST` | `/api/recolor` | Recolor objects in image |
+| `POST` | `/api/inpaint` | Inpaint / erase regions |
+| `POST` | `/api/vectorize` | Convert PNG to SVG |
+| `POST` | `/api/batch` | Batch-process multiple images |
 | `GET` | `/api/download/{filename}` | Download a processed image |
-| `GET` | `/api/history` | Get processing history (last 50) |
+| `GET` | `/api/history` | Get current user's processing history |
+| `GET` | `/api/history/all` | Admin — all history records |
 | `DELETE` | `/api/image/{id}` | Delete image from storage + history |
+| `POST` | `/api/chat` | AI chatbot (vision-aware) |
+| `POST` | `/api/ai/analyze` | AI image analysis |
+| `GET` | `/api/stats` | Usage stats for current user |
+| `GET` | `/api/analytics` | Analytics events |
 | `GET` | `/` | Health check |
 
-Full interactive docs at `http://localhost:8000/docs` when the backend is running.
+Full interactive docs: http://localhost:8000/docs
 
 ---
 
-## AI Pipeline (Summary)
+## AI Quality Tiers
+
+| Tier | Model | Best For | Speed |
+|---|---|---|---|
+| `fast` | ISNet-general-use | Products, objects, general use | ~1–2 s |
+| `standard` | U²-Net human seg | Portraits, people, faces | ~2–3 s |
+| `quality` | BiRefNet-general | Hair, fur, complex edges | ~4–6 s |
+
+---
+
+## AI Pipeline
 
 ```
 User uploads image
         │
         ▼
-  [Backend] Validate + save to uploads/
+  [Backend] Validate + quota check
         │
         ▼
-  [AI] Preprocess — resize to 1024×1024, ImageNet normalize
+  [AI] Preprocessing — resize 1024×1024, ImageNet normalise
         │
         ▼
-  [AI] Inference — run segmentation model (ONNX / PyTorch / rembg)
+  [AI] Inference — rembg / ONNX / PyTorch
         │
         ▼
-  [AI] Postprocess — upsample mask, binarise, refine edges
+  [AI] Postprocessing — upsample mask → morphological refinement
+                      → guided filter matting → transparent PNG
         │
         ▼
-  [AI] Apply alpha channel → transparent PNG saved to output/
+  [Backend] Save to storage, write history, return download URL
         │
         ▼
-  [Backend] Return download URL to frontend
-        │
-        ▼
-  [Frontend] Show result, comparison slider, download button
+  [Frontend] Before/after slider, download, edit further
 ```
 
 ---
 
 ## Environment Variables
 
-All variables are documented in `.env.example` at the root.  
-Copy it to `.env` before running the backend.
+All variables are documented in `.env.example` at the repo root and in each submodule's `.env.example`.
+
+**Key variables to set before running:**
+
+| Variable | File | Description |
+|---|---|---|
+| `SECRET_KEY` | `backend/.env` | JWT signing secret — generate with `secrets.token_hex(32)` |
+| `GEMINI_API_KEY` | `backend/.env` | Google Gemini API key (free tier available) |
+| `MONGO_URI` | `backend/.env` | MongoDB connection string |
+| `ALLOWED_ORIGINS` | `backend/.env` | Comma-separated frontend URLs for CORS |
 
 ---
 
 ## Deployment
 
 | Service | What it hosts |
-|---------|--------------|
+|---|---|
 | Vercel | `frontend/` — auto-deploy on push to `main` |
-| Docker | `backend/` + `AI-Background-Remover-AI/` together |
+| Docker | `backend/` + `AI/` — via Dockerfile or docker-compose |
 
 ```bash
-# Build and run with Docker
+# Build and run backend + AI with Docker
 docker build -t ai-bg-remover .
-docker run -p 8000:8000 --env-file .env ai-bg-remover
+docker run -p 8000:8000 --env-file backend/.env ai-bg-remover
+
+# Or use compose for the full stack
+docker compose up --build
 ```
 
 ---
 
-## Project Roadmap
+## Submodule Workflow
 
-- [x] AI inference pipeline (ONNX / PyTorch / rembg backends)
-- [x] FastAPI backend with all routes
-- [x] MongoDB history storage
-- [x] React frontend — upload, result, compare, download
-- [x] History page
-- [x] Dark mode
-- [ ] User authentication (JWT)
-- [ ] Background color / image replacement
-- [ ] Batch processing
-- [ ] Video background removal
-- [ ] Mobile app
+```bash
+# Update a submodule after a teammate pushes to it
+cd frontend           # or backend / AI
+git pull origin main
+
+# Back in the parent repo — record the new submodule commit
+cd ..
+git add frontend
+git commit -m "chore: update frontend submodule pointer"
+git push
+```
 
 ---
 
 ## Links
 
 | Resource | URL |
-|----------|-----|
+|---|---|
 | Parent repo | github.com/QuantumLogicsLabs/AI-Background-Remover |
 | Frontend repo | github.com/QuantumLogicsLabs/AI-Background-Remover-frontend |
 | Backend repo | github.com/QuantumLogicsLabs/AI-Background-Remover-backend |
 | AI repo | github.com/QuantumLogicsLabs/AI-Background-Remover-AI |
-| Contribution guide | [CONTRIBUTING.md](./CONTRIBUTING.md) |
-| Team workload | [TEAM_WORKLOAD.md](./TEAM_WORKLOAD.md) |
+| Changelog | [CHANGELOG.md](./CHANGELOG.md) |
+| Contributing | [CONTRIBUTING.md](./CONTRIBUTING.md) |
