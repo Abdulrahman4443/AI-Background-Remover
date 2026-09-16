@@ -3,9 +3,9 @@ FROM python:3.11-slim
 ARG USE_GPU=false
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        libgl1 \
-        libglib2.0-0 \
-        libgomp1 \
+    libgl1 \
+    libglib2.0-0 \
+    libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -14,10 +14,11 @@ COPY requirements.txt .
 
 RUN pip install --no-cache-dir --upgrade pip \
  && if [ "$USE_GPU" = "true" ]; then \
-        sed -i 's|whl/cpu|whl/cu121|g' requirements.txt \
-     && sed -i 's/+cpu/+cu121/g' requirements.txt \
+        pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cu121 \
      && sed -i 's/^onnxruntime==.*/# onnxruntime (replaced by gpu build)/' requirements.txt \
      && sed -i 's/^# onnxruntime-gpu/onnxruntime-gpu/' requirements.txt; \
+    else \
+        pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu; \
     fi \
  && pip install --no-cache-dir -r requirements.txt
 
@@ -36,7 +37,8 @@ ENV MODEL_BACKEND=rembg \
     REFRESH_TOKEN_EXPIRE_DAYS=30 \
     COOKIE_SECURE=true \
     COOKIE_SAMESITE=none \
-    DAILY_QUOTA_LIMIT=100 \
+    DAILY_QUOTA_LIMIT=0 \
+    WARM_UP_MODELS=false \
     FILE_MAX_AGE_HOURS=24 \
     CLEANUP_INTERVAL_MINS=60 \
     AI_PROVIDER=gemini \
