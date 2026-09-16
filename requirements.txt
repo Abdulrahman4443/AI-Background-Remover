@@ -1,50 +1,58 @@
 # =========================================================
 # AI Background Removal System — Python Requirements
 # Covers: AI inference pipeline + FastAPI backend
+# (PyTorch is installed directly via CPU index in Dockerfile)
 # =========================================================
 
-# ---------- Core Deep Learning (CPU Build) ----------
-torch
-torchvision
-# GPU builds: uncomment the lines below and remove the cpu lines above
-# --extra-index-url https://download.pytorch.org/whl/cu121
-# torch==2.3.1+cu121
-# torchvision==0.18.1+cu121
-
 # ---------- AI Model: Segmentation ----------
-# U²-Net, BiRefNet, RMBG-2.0 dependencies
+transformers==4.44.2
 huggingface-hub==0.24.6
+timm==1.0.9
 safetensors==0.4.4
+einops==0.8.0
 
 # ---------- Image Processing ----------
-# opencv-contrib-python includes ximgproc (guided filter for better edge matting)
-# Do NOT install opencv-python alongside this — they conflict.
 opencv-contrib-python==4.10.0.84
 Pillow==10.4.0
 numpy==1.26.4
+scikit-image==0.24.0
+rembg==2.0.59
 
 # ---------- Alpha Matting ----------
+pymatting==1.1.12
 
 # ---------- Optimization / Inference ----------
-# Install ONLY ONE of onnxruntime or onnxruntime-gpu depending on your hardware.
 onnx==1.16.2
-# onnxruntime-gpu==1.19.2     # GPU inference — uncomment and remove onnxruntime above
+onnxruntime==1.19.2
 
 # ---------- Backend: FastAPI ----------
 fastapi==0.115.0
 uvicorn[standard]==0.30.6
+python-multipart==0.0.9
 pydantic==2.9.2
 pydantic-settings==2.5.2
 
 # ---------- Backend: MongoDB ----------
 pymongo==4.8.0
+motor==3.5.1
+beanie==1.26.0
+dnspython==2.6.1
 
 # ---------- Backend: Auth / File / Utils ----------
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+aiofiles==24.1.0
+python-dotenv==1.0.1
+loguru==0.7.2
 
 # ---------- Backend: Storage ----------
+boto3==1.35.23
 
 # ---------- AI Chat / Analysis (LLM providers) ----------
+google-genai>=1.0.0
+openai==1.51.0
 
 # ---------- Testing ----------
 pytest==8.3.3
 pytest-asyncio>=0.24.0
+httpx==0.27.2
